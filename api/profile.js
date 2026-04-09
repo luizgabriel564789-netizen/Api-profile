@@ -5,30 +5,20 @@ export default async function handler(req, res) {
     const nome = req.query.nome || 'Usuário'
     const avatarUrl = req.query.avatar || 'https://i.imgur.com/8w0bK9X.png'
     const dinheiro = Number(req.query.reais) || 0
-
     const nivel = Number(req.query.nivel) || 1
     const xp = Number(req.query.xp) || 0
     const xpMax = Number(req.query.xpMax) || 100
-
     const fome = Number(req.query.fome) || 100
     const sede = Number(req.query.sede) || 100
 
-    const bgUrl = req.query.background
-
-    const canvas = createCanvas(900, 420)
+    const canvas = createCanvas(900, 400)
     const ctx = canvas.getContext('2d')
 
-    try {
-      if (bgUrl) {
-        const bg = await loadImage(bgUrl)
-        ctx.drawImage(bg, 0, 0, canvas.width, canvas.height)
-      } else {
-        throw 'sem bg'
-      }
-    } catch {
-      ctx.fillStyle = '#0f172a'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-    }
+    ctx.fillStyle = '#0d1117'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    ctx.fillStyle = '#161b22'
+    ctx.fillRect(50, 50, 800, 300)
 
     const dinheiroFormatado = dinheiro.toLocaleString('pt-BR')
 
@@ -41,54 +31,52 @@ export default async function handler(req, res) {
 
     ctx.save()
     ctx.beginPath()
-    ctx.arc(120, 175, 80, 0, Math.PI * 2)
+    ctx.arc(150, 200, 60, 0, Math.PI * 2)
     ctx.closePath()
     ctx.clip()
-    ctx.drawImage(avatar, 40, 95, 160, 160)
+    ctx.drawImage(avatar, 90, 140, 120, 120)
     ctx.restore()
 
     ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 32px sans-serif'
-    ctx.fillText(nome, 240, 80)
+    ctx.font = 'bold 28px Arial'
+    ctx.fillText(nome, 250, 110)
 
     ctx.fillStyle = '#00ff88'
-    ctx.font = 'bold 26px sans-serif'
-    ctx.fillText(`R$ ${dinheiroFormatado}`, 240, 120)
+    ctx.font = '20px Arial'
+    ctx.fillText(`R$ ${dinheiroFormatado}`, 250, 140)
 
     ctx.fillStyle = '#facc15'
-    ctx.fillText(`Nivel: ${nivel}`, 240, 160)
+    ctx.fillText(`Nivel ${nivel}`, 250, 170)
 
-    function barra(x, y, largura, altura, valor, max, cor) {
-      ctx.fillStyle = '#1f2937'
-      ctx.fillRect(x, y, largura, altura)
+    function barra(x, y, w, h, val, max, cor) {
+      ctx.fillStyle = '#30363d'
+      ctx.fillRect(x, y, w, h)
 
-      const porcentagem = Math.max(0, Math.min(1, valor / max))
-
+      const p = val / max
       ctx.fillStyle = cor
-      ctx.fillRect(x, y, largura * porcentagem, altura)
+      ctx.fillRect(x, y, w * p, h)
 
-      ctx.fillStyle = '#ffffff'
-      ctx.font = 'bold 16px sans-serif'
-      ctx.fillText(`${Math.floor(porcentagem * 100)}%`, x + largura + 10, y + 14)
+      ctx.fillStyle = '#fff'
+      ctx.font = '14px Arial'
+      ctx.fillText(Math.floor(p * 100) + '%', x + w - 40, y + 14)
     }
 
-    ctx.fillStyle = '#ffffff'
-    ctx.font = '20px sans-serif'
-    ctx.fillText('XP', 240, 200)
-    barra(240, 210, 500, 18, xp, xpMax, '#5865F2')
-    ctx.fillText(`${xp}/${xpMax}`, 240, 235)
+    ctx.fillStyle = '#fff'
+    ctx.font = '16px Arial'
 
-    ctx.fillText('Fome', 240, 270)
-    barra(240, 280, 500, 18, fome, 100, '#ef4444')
+    ctx.fillText('XP', 250, 210)
+    barra(250, 220, 500, 15, xp, xpMax, '#5865F2')
 
-    ctx.fillText('Sede', 240, 330)
-    barra(240, 340, 500, 18, sede, 100, '#3b82f6')
+    ctx.fillText('Fome', 250, 260)
+    barra(250, 270, 500, 15, fome, 100, '#ff4d4d')
+
+    ctx.fillText('Sede', 250, 310)
+    barra(250, 320, 500, 15, sede, 100, '#4da6ff')
 
     res.setHeader('Content-Type', 'image/png')
     res.send(canvas.toBuffer('image/png'))
 
-  } catch (err) {
-    console.error(err)
-    res.status(500).send('Erro na API')
+  } catch (e) {
+    res.status(500).send('Erro')
   }
 }
