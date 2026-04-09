@@ -13,14 +13,29 @@ export default async function handler(req, res) {
     const fome = Number(req.query.fome) || 100
     const sede = Number(req.query.sede) || 100
 
-    const canvas = createCanvas(900, 350)
+    const bgUrl = req.query.background
+
+    const canvas = createCanvas(900, 420)
     const ctx = canvas.getContext('2d')
 
-    // FUNDO
-    ctx.fillStyle = '#0f172a'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    // FUNDO (IMAGEM OU COR)
+    let background
+    try {
+      if (bgUrl) {
+        background = await loadImage(bgUrl)
+        ctx.drawImage(background, 0, 0, canvas.width, canvas.height)
+      } else {
+        throw 'sem bg'
+      }
+    } catch {
+      ctx.fillStyle = '#0f172a'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+    }
 
-    // CARREGAR AVATAR
+    // FORMATAR DINHEIRO
+    const dinheiroFormatado = dinheiro.toLocaleString('pt-BR')
+
+    // AVATAR
     let avatar
     try {
       avatar = await loadImage(avatarUrl)
@@ -44,14 +59,14 @@ export default async function handler(req, res) {
 
     // DINHEIRO
     ctx.fillStyle = '#00ff88'
-    ctx.font = '26px sans-serif'
-    ctx.fillText(`💰 ${dinheiro}`, 240, 120)
+    ctx.font = 'bold 26px sans-serif'
+    ctx.fillText(`R$ ${dinheiroFormatado}`, 240, 120)
 
     // NÍVEL
     ctx.fillStyle = '#facc15'
-    ctx.fillText(`⭐ Nível: ${nivel}`, 240, 160)
+    ctx.fillText(`Nivel: ${nivel}`, 240, 160)
 
-    // FUNÇÃO DE BARRA
+    // FUNÇÃO BARRA
     function barra(x, y, largura, altura, valor, max, cor) {
       ctx.fillStyle = '#1f2937'
       ctx.fillRect(x, y, largura, altura)
@@ -60,24 +75,29 @@ export default async function handler(req, res) {
       ctx.fillStyle = cor
       ctx.fillRect(x, y, largura * porcentagem, altura)
 
+      // TEXTO %
+      ctx.fillStyle = '#ffffff'
+      ctx.font = '14px sans-serif'
+      ctx.fillText(`${Math.floor(porcentagem * 100)}%`, x + largura / 2 - 15, y + 14)
+
       return Math.floor(porcentagem * 100)
     }
 
     // XP
     ctx.fillStyle = '#ffffff'
-    ctx.fillText('XP', 240, 200)
-    const xpPorc = barra(240, 210, 500, 18, xp, xpMax, '#5865F2')
-    ctx.fillText(`${xp}/${xpMax} (${xpPorc}%)`, 240, 235)
+    ctx.font = '20px sans-serif'
+    ctx.fillText('XP', 240, 190)
+
+    barra(240, 200, 500, 18, xp, xpMax, '#5865F2')
+    ctx.fillText(`${xp}/${xpMax}`, 240, 225)
 
     // FOME
-    ctx.fillText('🍗 Fome', 240, 265)
-    const fomePorc = barra(240, 275, 500, 18, fome, 100, '#ef4444')
-    ctx.fillText(`${fome}%`, 240, 300)
+    ctx.fillText('Fome', 240, 255)
+    barra(240, 265, 500, 18, fome, 100, '#ef4444')
 
     // SEDE
-    ctx.fillText('💧 Sede', 240, 325)
-    const sedePorc = barra(240, 335, 500, 18, sede, 100, '#3b82f6')
-    ctx.fillText(`${sede}%`, 240, 360)
+    ctx.fillText('Sede', 240, 315)
+    barra(240, 325, 500, 18, sede, 100, '#3b82f6')
 
     res.setHeader('Content-Type', 'image/png')
     res.send(canvas.toBuffer('image/png'))
