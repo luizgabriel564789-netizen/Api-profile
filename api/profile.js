@@ -53,6 +53,7 @@ export default async function handler(req, res) {
       ctx.fillRect(x, y, w, h)
 
       const p = val / max
+
       ctx.fillStyle = cor
       ctx.fillRect(x, y, w * p, h)
 
@@ -74,6 +75,8 @@ export default async function handler(req, res) {
     barra(250, 320, 500, 15, sede, 100, '#4da6ff')
 
     res.setHeader('Content-Type', 'image/png')
+    res.setHeader('Cache-Control', 'no-store')
+
     res.send(canvas.toBuffer('image/png'))
 
   } catch (e) {
