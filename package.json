@@ -1,8 +1,14 @@
 {
+  "name": "foxbank-api",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+
   "dependencies": {
     "@napi-rs/canvas": "^0.1.44"
   },
+
   "engines": {
-    "node": "24.x"
+    "node": "20.x"
   }
 }
