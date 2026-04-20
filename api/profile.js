@@ -1,77 +1,123 @@
-import fs from "fs";
-import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
-
-GlobalFonts.registerFromPath("./fonts/Inter-Bold.ttf", "Inter");
+import { createCanvas, loadImage } from "@napi-rs/canvas";
 
 export default async function handler(req, res) {
+  const width = 900;
+  const height = 450;
 
-  const data = JSON.parse(fs.readFileSync("./profile.json", "utf-8"));
-  const { id } = req.query;
-
-  const user = data.users[id];
-  if (!user) return res.status(404).send("User not found");
-
-  const banner = data.banners[user.bannerAtual];
-
-  const canvas = createCanvas(900, 400);
+  const canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
-  const bg = await loadImage(banner.url);
-  ctx.drawImage(bg, 0, 0, 900, 200);
+  const username = req.query.user || "Usuario";
+  const avatar = req.query.avatar || "https://cdn.discordapp.com/embed/avatars/0.png";
+  const coins = req.query.coins || "0";
+  const nivel = req.query.level || "0";
+  const xpAtual = Number(req.query.xp || 0);
+  const xpMax = Number(req.query.maxxp || 100);
+  const reps = req.query.reps || "0";
 
-  ctx.fillStyle = "rgba(0,0,0,0.6)";
-  ctx.fillRect(0, 0, 900, 200);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, width, height);
 
-  ctx.fillStyle = "#0f172a";
-  ctx.fillRect(0, 200, 900, 200);
+  const gradient = ctx.createLinearGradient(0, 0, width, 0);
+  gradient.addColorStop(0, "#c084fc");
+  gradient.addColorStop(1, "#f472b6");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, 140);
 
-  const avatar = await loadImage(user.avatar);
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(200, 60, 50, 0, Math.PI * 2);
+  ctx.arc(260, 60, 60, 0, Math.PI * 2);
+  ctx.arc(320, 60, 50, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  ctx.fillStyle = "#111";
+  ctx.font = "bold 26px Arial";
+  ctx.fillText("Brasil hexa 2026 ! Vai na minha!", 30, 180);
+
+  ctx.fillStyle = "#e5e5e5";
+  roundRect(ctx, 30, 200, 420, 200, 25, true);
+
+  drawCard(ctx, 50, 220, "💰", `${coins} Coins`);
+  drawCard(ctx, 250, 220, "⭐", `Nível: ${nivel}\n${xpAtual}/${xpMax} XP`);
+  drawCard(ctx, 50, 300, "🏅", "Badges");
+  drawCard(ctx, 250, 300, "👍", `Reps ${reps}`);
+
+  const progress = xpAtual / xpMax;
+
+  ctx.fillStyle = "#d1d5db";
+  roundRect(ctx, 50, 360, 350, 15, 10, true);
+
+  const barGradient = ctx.createLinearGradient(50, 0, 400, 0);
+  barGradient.addColorStop(0, "#9333ea");
+  barGradient.addColorStop(1, "#ec4899");
+
+  ctx.fillStyle = barGradient;
+  roundRect(ctx, 50, 360, 350 * progress, 15, 10, true);
+
+  const img = await loadImage(avatar);
+
   ctx.save();
   ctx.beginPath();
-  ctx.arc(120, 200, 70, 0, Math.PI * 2);
+  ctx.arc(700, 180, 90, 0, Math.PI * 2);
   ctx.closePath();
   ctx.clip();
-  ctx.drawImage(avatar, 50, 130, 140, 140);
+  ctx.drawImage(img, 610, 90, 180, 180);
   ctx.restore();
 
-  ctx.font = "bold 40px Inter";
-  ctx.fillStyle = "#ffffff";
-  ctx.fillText(user.nick, 220, 190);
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = "#e5e5e5";
+  ctx.beginPath();
+  ctx.arc(700, 180, 90, 0, Math.PI * 2);
+  ctx.stroke();
 
-  ctx.font = "24px Inter";
-  ctx.fillStyle = "#22c55e";
-  ctx.fillText(`💰 ${user.dinheiro}`, 220, 230);
+  ctx.fillStyle = "#e5e5e5";
+  roundRect(ctx, 600, 290, 200, 50, 25, true);
 
-  ctx.fillStyle = "#60a5fa";
-  ctx.fillText(`🏦 ${user.banco}`, 220, 260);
+  ctx.fillStyle = "#000";
+  ctx.font = "bold 20px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText(username, 700, 322);
 
-  const xpPercent = user.xp / user.xpNeed;
-
-  ctx.fillStyle = "#1e293b";
-  ctx.fillRect(220, 290, 400, 20);
-
-  ctx.fillStyle = "#a855f7";
-  ctx.fillRect(220, 290, 400 * xpPercent, 20);
-
-  ctx.fillStyle = "#fff";
-  ctx.font = "18px Inter";
-  ctx.fillText(`${user.xp}/${user.xpNeed}`, 630, 305);
-
-  function drawBar(x, y, value, color, emoji) {
-    ctx.fillStyle = "#1e293b";
-    ctx.fillRect(x, y, 200, 15);
-
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, 200 * (value / 100), 15);
-
-    ctx.fillStyle = "#fff";
-    ctx.font = "16px Inter";
-    ctx.fillText(emoji, x - 25, y + 12);
-  }
-
-  drawBar(650, 230, user.fome, "#f59e0b", "🍗");
-  drawBar(650, 260, user.sede, "#3b82f6", "💧");
+  const buffer = canvas.toBuffer("image/png");
 
   res.setHeader("Content-Type", "image/png");
-  res.send(canvas.toBuffer("image/png"));
+  res.send(buffer);
+}
+
+function drawCard(ctx, x, y, icon, text) {
+  ctx.fillStyle = "#d1d5db";
+  roundRect(ctx, x, y, 170, 60, 15, true);
+
+  ctx.fillStyle = "#9333ea";
+  roundRect(ctx, x, y, 55, 60, 15, true);
+
+  ctx.fillStyle = "#fff";
+  ctx.font = "22px Arial";
+  ctx.fillText(icon, x + 15, y + 38);
+
+  ctx.fillStyle = "#000";
+  ctx.font = "bold 14px Arial";
+
+  const lines = text.split("\n");
+  lines.forEach((line, i) => {
+    ctx.fillText(line, x + 65, y + 22 + i * 18);
+  });
+}
+
+function roundRect(ctx, x, y, width, height, radius, fill) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  if (fill) ctx.fill();
 }
