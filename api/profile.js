@@ -1,4 +1,4 @@
-import { createCanvas, loadImage } from "@napi-rs/canvas";
+  import { createCanvas, loadImage } from "@napi-rs/canvas";
 
 export default async function handler(req, res) {
   const width = 900;
@@ -7,13 +7,16 @@ export default async function handler(req, res) {
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
-  const username = req.query.user || "Usuario";
+  const username = String(req.query.user ?? "Usuario");
   const avatar = req.query.avatar || "https://cdn.discordapp.com/embed/avatars/0.png";
-  const coins = req.query.coins || "0";
-  const nivel = req.query.level || "0";
-  const xpAtual = Number(req.query.xp || 0);
-  const xpMax = Number(req.query.maxxp || 100);
-  const reps = req.query.reps || "0";
+  const coins = String(req.query.coins ?? "0");
+  const nivel = String(req.query.level ?? "0");
+  const xpAtual = Math.max(0, Number(req.query.xp ?? 0));
+  const xpMax = Math.max(1, Number(req.query.maxxp ?? 100));
+  const reps = String(req.query.reps ?? "0");
+  const descricao = String(req.query.desc ?? "Sem descrição");
+
+  const progress = Math.min(1, xpAtual / xpMax);
 
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, width, height);
@@ -34,8 +37,8 @@ export default async function handler(req, res) {
   ctx.globalAlpha = 1;
 
   ctx.fillStyle = "#111";
-  ctx.font = "bold 26px Arial";
-  ctx.fillText("Brasil hexa 2026 ! Vai na minha!", 30, 180);
+  ctx.font = "bold 26px sans-serif";
+  drawMultilineText(ctx, descricao, 30, 180, 800, 28);
 
   ctx.fillStyle = "#e5e5e5";
   roundRect(ctx, 30, 200, 420, 200, 25, true);
@@ -44,8 +47,6 @@ export default async function handler(req, res) {
   drawCard(ctx, 250, 220, "⭐", `Nível: ${nivel}\n${xpAtual}/${xpMax} XP`);
   drawCard(ctx, 50, 300, "🏅", "Badges");
   drawCard(ctx, 250, 300, "👍", `Reps ${reps}`);
-
-  const progress = xpAtual / xpMax;
 
   ctx.fillStyle = "#d1d5db";
   roundRect(ctx, 50, 360, 350, 15, 10, true);
@@ -77,7 +78,7 @@ export default async function handler(req, res) {
   roundRect(ctx, 600, 290, 200, 50, 25, true);
 
   ctx.fillStyle = "#000";
-  ctx.font = "bold 20px Arial";
+  ctx.font = "bold 20px sans-serif";
   ctx.textAlign = "center";
   ctx.fillText(username, 700, 322);
 
@@ -95,11 +96,11 @@ function drawCard(ctx, x, y, icon, text) {
   roundRect(ctx, x, y, 55, 60, 15, true);
 
   ctx.fillStyle = "#fff";
-  ctx.font = "22px Arial";
+  ctx.font = "22px sans-serif";
   ctx.fillText(icon, x + 15, y + 38);
 
   ctx.fillStyle = "#000";
-  ctx.font = "bold 14px Arial";
+  ctx.font = "bold 14px sans-serif";
 
   const lines = text.split("\n");
   lines.forEach((line, i) => {
@@ -120,4 +121,24 @@ function roundRect(ctx, x, y, width, height, radius, fill) {
   ctx.quadraticCurveTo(x, y, x + radius, y);
   ctx.closePath();
   if (fill) ctx.fill();
+}
+
+function drawMultilineText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(" ");
+  let line = "";
+  let offsetY = 0;
+
+  for (let i = 0; i < words.length; i++) {
+    const testLine = line + words[i] + " ";
+    const testWidth = ctx.measureText(testLine).width;
+
+    if (testWidth > maxWidth && i > 0) {
+      ctx.fillText(line, x, y + offsetY);
+      line = words[i] + " ";
+      offsetY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, x, y + offsetY);
 }
