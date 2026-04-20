@@ -1,144 +1,138 @@
-  import { createCanvas, loadImage } from "@napi-rs/canvas";
+    import { createCanvas, loadImage } from "@napi-rs/canvas";
 
 export default async function handler(req, res) {
-  const width = 900;
-  const height = 450;
+  const W = 900;
+  const H = 450;
 
-  const canvas = createCanvas(width, height);
+  const canvas = createCanvas(W, H);
   const ctx = canvas.getContext("2d");
 
   const username = String(req.query.user ?? "Usuario");
   const avatar = req.query.avatar || "https://cdn.discordapp.com/embed/avatars/0.png";
-  const coins = String(req.query.coins ?? "0");
-  const nivel = String(req.query.level ?? "0");
-  const xpAtual = Math.max(0, Number(req.query.xp ?? 0));
-  const xpMax = Math.max(1, Number(req.query.maxxp ?? 100));
-  const reps = String(req.query.reps ?? "0");
-  const descricao = String(req.query.desc ?? "Sem descrição");
+  const coins = Number(req.query.coins ?? 0);
+  const level = Number(req.query.level ?? 0);
+  const xp = Math.max(0, Number(req.query.xp ?? 0));
+  const maxxp = Math.max(1, Number(req.query.maxxp ?? 100));
+  const reps = Number(req.query.reps ?? 0);
+  const desc = String(req.query.desc ?? "Sem descrição");
 
-  const progress = Math.min(1, xpAtual / xpMax);
+  const progress = Math.min(1, xp / maxxp);
 
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = "#f5f5f5";
+  ctx.fillRect(0, 0, W, H);
 
-  const gradient = ctx.createLinearGradient(0, 0, width, 0);
-  gradient.addColorStop(0, "#c084fc");
-  gradient.addColorStop(1, "#f472b6");
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, width, 140);
+  const g = ctx.createLinearGradient(0, 0, W, 0);
+  g.addColorStop(0, "#9333ea");
+  g.addColorStop(1, "#ec4899");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, 140);
 
-  ctx.globalAlpha = 0.15;
-  ctx.fillStyle = "#ffffff";
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = "#fff";
   ctx.beginPath();
-  ctx.arc(200, 60, 50, 0, Math.PI * 2);
-  ctx.arc(260, 60, 60, 0, Math.PI * 2);
-  ctx.arc(320, 60, 50, 0, Math.PI * 2);
+  ctx.arc(200, 60, 60, 0, Math.PI * 2);
+  ctx.arc(260, 60, 70, 0, Math.PI * 2);
+  ctx.arc(320, 60, 60, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = 1;
 
   ctx.fillStyle = "#111";
   ctx.font = "bold 26px sans-serif";
-  drawMultilineText(ctx, descricao, 30, 180, 800, 28);
+  wrap(ctx, desc, 30, 175, 820, 28);
 
-  ctx.fillStyle = "#e5e5e5";
-  roundRect(ctx, 30, 200, 420, 200, 25, true);
+  rounded(ctx, 30, 200, 440, 210, 25, "#e5e5e5");
 
-  drawCard(ctx, 50, 220, "💰", `${coins} Coins`);
-  drawCard(ctx, 250, 220, "⭐", `Nível: ${nivel}\n${xpAtual}/${xpMax} XP`);
-  drawCard(ctx, 50, 300, "🏅", "Badges");
-  drawCard(ctx, 250, 300, "👍", `Reps ${reps}`);
+  card(ctx, 50, 220, "💰", formatNumber(coins) + " Coins");
+  card(ctx, 260, 220, "⭐", "Nível: " + level + "\n" + xp + "/" + maxxp + " XP");
+  card(ctx, 50, 300, "🏅", "Badges");
+  card(ctx, 260, 300, "👍", "Reps " + reps);
 
-  ctx.fillStyle = "#d1d5db";
-  roundRect(ctx, 50, 360, 350, 15, 10, true);
+  rounded(ctx, 50, 365, 380, 14, 10, "#d1d5db");
 
-  const barGradient = ctx.createLinearGradient(50, 0, 400, 0);
-  barGradient.addColorStop(0, "#9333ea");
-  barGradient.addColorStop(1, "#ec4899");
+  const bgBar = ctx.createLinearGradient(50, 0, 430, 0);
+  bgBar.addColorStop(0, "#9333ea");
+  bgBar.addColorStop(1, "#ec4899");
 
-  ctx.fillStyle = barGradient;
-  roundRect(ctx, 50, 360, 350 * progress, 15, 10, true);
+  rounded(ctx, 50, 365, 380 * progress, 14, 10, bgBar);
 
   const img = await loadImage(avatar);
 
   ctx.save();
   ctx.beginPath();
-  ctx.arc(700, 180, 90, 0, Math.PI * 2);
-  ctx.closePath();
+  ctx.arc(720, 180, 90, 0, Math.PI * 2);
   ctx.clip();
-  ctx.drawImage(img, 610, 90, 180, 180);
+  ctx.drawImage(img, 630, 90, 180, 180);
   ctx.restore();
 
   ctx.lineWidth = 6;
   ctx.strokeStyle = "#e5e5e5";
   ctx.beginPath();
-  ctx.arc(700, 180, 90, 0, Math.PI * 2);
+  ctx.arc(720, 180, 90, 0, Math.PI * 2);
   ctx.stroke();
 
-  ctx.fillStyle = "#e5e5e5";
-  roundRect(ctx, 600, 290, 200, 50, 25, true);
+  rounded(ctx, 610, 300, 220, 50, 25, "#e5e5e5");
 
   ctx.fillStyle = "#000";
   ctx.font = "bold 20px sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText(username, 700, 322);
-
-  const buffer = canvas.toBuffer("image/png");
+  ctx.fillText(username, 720, 332);
 
   res.setHeader("Content-Type", "image/png");
-  res.send(buffer);
+  res.send(canvas.toBuffer("image/png"));
 }
 
-function drawCard(ctx, x, y, icon, text) {
-  ctx.fillStyle = "#d1d5db";
-  roundRect(ctx, x, y, 170, 60, 15, true);
-
-  ctx.fillStyle = "#9333ea";
-  roundRect(ctx, x, y, 55, 60, 15, true);
+function card(ctx, x, y, icon, text) {
+  rounded(ctx, x, y, 180, 65, 15, "#d1d5db");
+  rounded(ctx, x, y, 60, 65, 15, "#9333ea");
 
   ctx.fillStyle = "#fff";
   ctx.font = "22px sans-serif";
-  ctx.fillText(icon, x + 15, y + 38);
+  ctx.fillText(icon, x + 18, y + 42);
 
   ctx.fillStyle = "#000";
   ctx.font = "bold 14px sans-serif";
 
   const lines = text.split("\n");
-  lines.forEach((line, i) => {
-    ctx.fillText(line, x + 65, y + 22 + i * 18);
+  lines.forEach((l, i) => {
+    ctx.fillText(l, x + 70, y + 25 + i * 18);
   });
 }
 
-function roundRect(ctx, x, y, width, height, radius, fill) {
+function rounded(ctx, x, y, w, h, r, color) {
+  ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.lineTo(x + width - radius, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-  ctx.lineTo(x + width, y + height - radius);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-  ctx.lineTo(x + radius, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-  ctx.lineTo(x, y + radius);
-  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
-  if (fill) ctx.fill();
+  ctx.fill();
 }
 
-function drawMultilineText(ctx, text, x, y, maxWidth, lineHeight) {
+function wrap(ctx, text, x, y, maxWidth, lineHeight) {
   const words = text.split(" ");
   let line = "";
-  let offsetY = 0;
+  let offset = 0;
 
   for (let i = 0; i < words.length; i++) {
-    const testLine = line + words[i] + " ";
-    const testWidth = ctx.measureText(testLine).width;
-
-    if (testWidth > maxWidth && i > 0) {
-      ctx.fillText(line, x, y + offsetY);
+    const test = line + words[i] + " ";
+    if (ctx.measureText(test).width > maxWidth && i > 0) {
+      ctx.fillText(line, x, y + offset);
       line = words[i] + " ";
-      offsetY += lineHeight;
+      offset += lineHeight;
     } else {
-      line = testLine;
+      line = test;
     }
   }
-  ctx.fillText(line, x, y + offsetY);
+  ctx.fillText(line, x, y + offset);
+}
+
+function formatNumber(num) {
+  if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+  return String(num);
 }
