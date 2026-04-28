@@ -1,14 +1,17 @@
 {
-  "name": "foxbank-api",
+  "name": "profile-api-4k",
   "version": "1.0.0",
-  "type": "module",
-  "private": true,
-
-  "dependencies": {
-    "@napi-rs/canvas": "^0.1.44"
+  "description": "API de perfil 4K estilo game",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
   },
-
-  "engines": {
-    "node": "20.x"
+  "keywords": ["api", "canvas", "profile", "discord"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "canvas": "^2.11.2",
+    "express": "^4.19.2"
   }
 }
